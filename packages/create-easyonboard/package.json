@@ -1,0 +1,32 @@
+{
+  "name": "create-easyonboard",
+  "version": "1.0.0",
+  "description": "Create a new Easy Onboard project with one command",
+  "bin": {
+    "create-easyonboard": "./bin/create-easyonboard.js"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "onboarding",
+    "markdown",
+    "team",
+    "documentation",
+    "training"
+  ],
+  "author": "Easy Onboard Team",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^9.4.1",
+    "fs-extra": "^11.1.1",
+    "inquirer": "^8.2.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourorg/easy-onboard.git"
+  },
+  "homepage": "https://github.com/yourorg/easy-onboard#readme"
+}

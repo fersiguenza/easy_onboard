@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 Easy Onboard
 
-## Getting Started
+<div align="center">
+  <img src="https://github.com/fersiguenza/easy_onboard/blob/main/app/public/logo.png" alt="Easy Onboard Logo" width="120" height="120">
+</div>
 
-First, run the development server:
+<div align="center">
+  <strong>Simple onboarding content management for teams</strong>
+</div>
+
+<br>
+
+**Easy Onboard** is a flexible onboarding platform that supports both library usage and development customization. Choose the approach that works best for your team.
+
+## 🚀 **Two Ways to Use Easy Onboard**
+
+### **📦 Option 1: NPM Package (Recommended)**
+Perfect for teams who want to get started quickly with their own content.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# One-command setup (auto-installs dependencies)
+npx create-easyonboard my-company-onboard
+
+# Or with options
+npx create-easyonboard my-onboard --template startup --start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**✅ Best for:**
+- Quick setup with your own content
+- Standard onboarding needs
+- Teams who want to focus on content, not code
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### **🔧 Option 2: Fork & Customize**
+Perfect for teams who need custom features and full control.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Clone and customize
+git clone https://github.com/yourorg/easy-onboard
+cd easy-onboard/app
 
-## Learn More
+# Install and run
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+**✅ Best for:**
+- Custom features and integrations
+- Unique workflow requirements
+- Teams with development resources
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ✨ **Key Features**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 📝 **Markdown-based content** - Simple content management
+- 🎨 **Complete theming** - Brand colors, logos, and styling via environment variables
+- 📊 **Progress tracking** - Visual completion indicators
+- 🌍 **Multilingual support** - English and Spanish included
+- 🔒 **Admin interface** - Upload and manage content
+- 🐳 **Docker ready** - One-command deployment
+- 📱 **Responsive design** - Works on all devices
 
-## Deploy on Vercel
+## 🎯 **Quick Start Examples**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### **NPM Package Usage**
+```bash
+# Zero-config setup - creates project and starts dev server
+npx create-easyonboard my-onboard --template startup --start
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Or create project only (auto-installs dependencies)  
+npx create-easyonboard my-onboard --template corporate --docker
+
+# Customize branding
+cd my-onboard
+nano .env.local  # Update colors, company name, logo
+
+# Your app is ready at http://localhost:3000 (if using --start)
+```
+
+### **Fork & Customize Usage**
+```bash
+# Clone and setup
+git clone https://github.com/yourorg/easy-onboard
+cd easy-onboard/app
+npm install && npm run dev
+
+# Your content goes in: data/topics/
+# Theming via: .env.local
+```
+
+## 🎨 **Theme Customization**
+
+All branding is controlled via environment variables:
+
+```bash
+# .env.local
+NEXT_PUBLIC_APP_NAME="Acme Corp Onboarding"
+NEXT_PUBLIC_COMPANY_NAME="Acme Corp"
+NEXT_PUBLIC_PRIMARY_COLOR="59, 130, 246"  # Blue theme
+NEXT_PUBLIC_COMPANY_LOGO="/your-logo.svg"
+```
+
+## 📝 **Content Management**
+
+Simply add markdown files to your topics directory:
+
+```
+content/topics/           # NPM package projects
+├── 01-welcome.md
+├── 02-setup.md
+└── 03-workflow.md
+
+data/topics/              # Fork projects  
+├── 01-welcome.md
+├── 02-setup.md
+└── 03-workflow.md
+```
+
+## 📚 **Documentation**
+
+- **[📖 Complete Documentation](docs/)** - All guides and references
+- **[🎨 Theme Customization](docs/THEMES.md)** - Colors, branding, and styling
+- **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Docker, cloud, and traditional hosting
+- **[🤝 Contributing Guide](docs/CONTRIBUTING.md)** - Content creation best practices
+- **[📦 Publishing Guide](docs/PUBLISHING.md)** - NPM package distribution
+
+## 📄 **License**
+
+MIT License - Use it however you'd like!
+
+---
+
+**Choose your path: Quick setup with NPM or full customization with forking.** ✨

@@ -1,27 +1,35 @@
 {
-  "name": "easy_onboard",
-  "version": "0.1.0",
+  "name": "easy-onboard-monorepo",
+  "version": "1.0.0",
   "private": true,
+  "description": "Easy Onboard - Monorepo containing app and NPM packages",
+  "workspaces": [
+    "app",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "cd app && npm run dev",
+    "build": "cd app && npm run build",
+    "start": "cd app && npm start",
+    "build-packages": "npm run build --workspaces",
+    "publish-packages": "npm publish --workspaces --access public",
+    "test": "npm test --workspaces"
   },
-  "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.4.5"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourorg/easy-onboard.git"
   },
+  "keywords": [
+    "onboarding",
+    "markdown",
+    "team",
+    "documentation",
+    "training",
+    "nextjs"
+  ],
+  "author": "Easy Onboard Team",
+  "license": "MIT",
   "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "15.4.5",
-    "@eslint/eslintrc": "^3"
+    "lerna": "^6.6.2"
   }
 }
