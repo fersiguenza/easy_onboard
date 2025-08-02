@@ -1,75 +1,77 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import HomePage from '@/components/HomePage';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import AdminPanel from '@/components/AdminPanel';
-import AdminLogin from '@/components/AdminLogin';
-import HomePage from '@/components/HomePage';
+import Congratulations from '@/components/Congratulations';
 import ThemeProvider from '@/components/ThemeProvider';
+import RouteGuard from '@/components/RouteGuard';
 import { LoadingState } from '@/components/ui';
 import { themeConfig } from '@/lib/theme';
-import { useTopics, useAuth, useLanguage, useNavigation } from '@/hooks';
+import { useTopics, useLanguage, useNavigation } from '@/hooks';
+import { useUniversalAuth } from '@/hooks/useUniversalAuth';
+import { getAuthConfig } from '@/config/auth';
 import '@/lib/i18n';
 
 export default function Home() {
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [currentView, setCurrentView] = useState<'home' | 'onboarding' | 'congratulations'>('home');
   
   // Custom hooks
   const { topics, loading, createTopic, deleteTopic, updateTopicCompletion } = useTopics();
-  const { isAuthenticated: isAdminAuthenticated, login: adminLogin, logout: adminLogout } = useAuth();
   const { t } = useLanguage();
-  const { 
-    currentView, 
-    isAdminMode, 
-    navigateToHome, 
-    navigateToOnboarding, 
-    toggleAdminMode, 
-    enableAdminMode, 
-    disableAdminMode 
-  } = useNavigation();
+  const { isAdminMode, enableAdminMode, disableAdminMode } = useNavigation();
+  const { user, logout } = useUniversalAuth();
+  const authConfig = getAuthConfig();
+
+  // Auto-redirect admin users to admin panel
+  useEffect(() => {
+    if (user?.isAdmin && !isAdminMode && authConfig.provider !== 'none') {
+      enableAdminMode();
+    }
+  }, [user, isAdminMode, enableAdminMode, authConfig.provider]);
+
+  // Reset admin mode when user logs out
+  useEffect(() => {
+    if (!user && isAdminMode) {
+      disableAdminMode();
+      setCurrentView('home');
+    }
+  }, [user, isAdminMode, disableAdminMode]);
+
+  // Reset view state when user is not authenticated (after logout)
+  useEffect(() => {
+    if (!user && authConfig.requireAuth && authConfig.provider !== 'none') {
+      setCurrentView('home');
+      disableAdminMode();
+    }
+  }, [user, authConfig.requireAuth, authConfig.provider, disableAdminMode]);
+
+  const handleExitAdmin = () => {
+    disableAdminMode();
+    setCurrentView('home');
+  };
 
   const handleAdminToggle = () => {
-    if (!isAdminMode && !isAdminAuthenticated) {
-      setShowAdminLogin(true);
-    } else {
-      toggleAdminMode();
+    if (!isAdminMode && user?.isAdmin) {
+      enableAdminMode();
+    } else if (isAdminMode) {
+      disableAdminMode();
     }
   };
 
-  const handleAdminLogin = () => {
-    adminLogin();
-    enableAdminMode();
-    setShowAdminLogin(false);
-  };
-
-  const handleAdminLogout = () => {
-    adminLogout();
+  const handleLogout = async () => {
+    // First disable admin mode
     disableAdminMode();
+    setCurrentView('home');
+    
+    // Then logout
+    await logout();
   };
 
-  const handleStartOnboarding = () => {
-    navigateToOnboarding();
-  };
-
-  const handleContinueOnboarding = () => {
-    navigateToOnboarding();
-  };
-
-  const handleBackToHome = () => {
-    navigateToHome();
-  };
-
-  const handleTopicComplete = async (topicId: string) => {
+  const handleTopicUpload = (title: string, content: string) => {
     try {
-      await updateTopicCompletion(topicId, !topics.find(t => t.id === topicId)?.completed);
-    } catch (error) {
-      console.error('Error updating topic completion:', error);
-    }
-  };
-
-  const handleTopicUpload = async (title: string, content: string) => {
-    try {
-      await createTopic(title, content);
+      createTopic(title, content);
     } catch (error) {
       console.error('Error uploading topic:', error);
     }
@@ -83,100 +85,144 @@ export default function Home() {
     }
   };
 
+  const handleTopicComplete = (topicId: string) => {
+    try {
+      updateTopicCompletion(topicId, true);
+      
+      // Check if all topics are completed after this update
+      const completedCount = topics.filter(topic => topic.completed || topic.id === topicId).length;
+      if (completedCount === topics.length && topics.length > 0) {
+        // All topics completed, show congratulations
+        setTimeout(() => setCurrentView('congratulations'), 500);
+      }
+    } catch (error) {
+      console.error('Error updating topic completion:', error);
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setCurrentView('congratulations');
+  };
+
+  const handleStartOnboarding = () => {
+    setCurrentView('onboarding');
+  };
+
+  const handleContinueOnboarding = () => {
+    setCurrentView('onboarding');
+  };
+
+  const handleBackToHome = () => {
+    setCurrentView('home');
+  };
+
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-white">
-        {/* Header - Only show on admin mode or onboarding view */}
-        {(isAdminMode || currentView === 'onboarding') && (
-          <header className="bg-white shadow-sm border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center h-16">
-                <div className="flex items-center">
+        
+        {/* Navigation Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center min-w-0 flex-1">
+                <button
+                  onClick={handleBackToHome}
+                  className="flex items-center hover:opacity-75 transition-opacity min-w-0"
+                >
+                  <img 
+                    src={themeConfig.logo} 
+                    alt="Company Logo" 
+                    className="h-8 w-8 mr-2 sm:mr-3 flex-shrink-0"
+                  />
+                  <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
+                    <span className="text-primary">{themeConfig.appName}</span>
+                  </h1>
+                </button>
+              </div>
+              
+              <div className="flex items-center space-x-1 sm:space-x-4 flex-shrink-0">
+                {/* Back to Home Button (only in onboarding view) */}
+                {currentView === 'onboarding' && !isAdminMode && (
                   <button
                     onClick={handleBackToHome}
-                    className="flex items-center hover:opacity-75 transition-opacity"
+                    className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors hidden sm:block"
                   >
-                    <img 
-                      src={themeConfig.logo} 
-                      alt="Company Logo" 
-                      className="h-8 w-8 mr-3"
-                    />
-                    <h1 className="text-2xl font-bold text-gray-900">
-                      <span className="text-primary">{themeConfig.appName}</span>
-                    </h1>
+                    ← {t('onboarding.backToHome')}
                   </button>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                  {/* Back to Home Button (only in onboarding view) */}
-                  {currentView === 'onboarding' && !isAdminMode && (
-                    <button
-                      onClick={handleBackToHome}
-                      className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                    >
-                      ← {t('onboarding.backToHome')}
-                    </button>
-                  )}
+                )}
 
-                  {/* Admin Toggle */}
+                {/* Admin Toggle - Only show if user is admin */}
+                {user?.isAdmin && (
                   <button
                     onClick={handleAdminToggle}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors ${
                       isAdminMode 
                         ? 'bg-primary-light text-primary-dark' 
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    {isAdminMode ? `👤 ${t('header.userView')}` : `⚙️ ${t('header.admin')}`}
+                    <span className="sm:hidden">{isAdminMode ? '👤' : '⚙️'}</span>
+                    <span className="hidden sm:inline">{isAdminMode ? `👤 ${t('header.userView')}` : `⚙️ ${t('header.admin')}`}</span>
                   </button>
+                )}
 
-                  {/* Admin Logout */}
-                  {isAdminAuthenticated && (
-                    <button
-                      onClick={handleAdminLogout}
-                      className="px-3 py-1 rounded-full text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
-                    >
-                      {t('header.logout')}
-                    </button>
-                  )}
-                </div>
+                {/* Logout Button */}
+                {user && authConfig.provider !== 'none' && (
+                  <button
+                    onClick={handleLogout}
+                    className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                  >
+                    <span className="sm:hidden">↗</span>
+                    <span className="hidden sm:inline">{t('header.logout')}</span>
+                  </button>
+                )}
               </div>
             </div>
-          </header>
-        )}
+          </div>
+        </header>
 
         {/* Main Content */}
         <main>
           {loading ? (
             <LoadingState message={t('common.loading')} />
           ) : isAdminMode ? (
-            <AdminPanel 
-              topics={topics}
-              onTopicUpload={handleTopicUpload}
-              onTopicDelete={handleTopicDelete}
-              onTopicComplete={handleTopicComplete}
-            />
-          ) : currentView === 'home' ? (
-            <HomePage
-              topics={topics}
-              onStartOnboarding={handleStartOnboarding}
-              onContinueOnboarding={handleContinueOnboarding}
-            />
+            // Admin Panel - Always requires admin authentication
+            <RouteGuard adminOnly={true}>
+              <AdminPanel 
+                topics={topics}
+                onTopicUpload={handleTopicUpload}
+                onTopicDelete={handleTopicDelete}
+                onTopicComplete={handleTopicComplete}
+              />
+            </RouteGuard>
+          ) : currentView === 'congratulations' ? (
+            // Congratulations Page - Show after onboarding completion
+            <RouteGuard requireAuth={authConfig.requireAuth}>
+              <Congratulations 
+                onBackToHome={handleBackToHome}
+                completedTopicsCount={topics.filter(topic => topic.completed).length}
+              />
+            </RouteGuard>
+          ) : currentView === 'onboarding' ? (
+            // Onboarding Flow - Protected based on PROTECT_WELCOME setting
+            <RouteGuard requireAuth={authConfig.protectWelcome}>
+              <OnboardingFlow 
+                topics={topics}
+                onTopicComplete={handleTopicComplete}
+                onComplete={handleOnboardingComplete}
+              />
+            </RouteGuard>
           ) : (
-            <OnboardingFlow 
-              topics={topics}
-              onTopicComplete={handleTopicComplete}
-            />
+            // Home Page - Protected based on REQUIRE_AUTH setting
+            <RouteGuard requireAuth={authConfig.requireAuth}>
+              <HomePage
+                topics={topics}
+                onStartOnboarding={handleStartOnboarding}
+                onContinueOnboarding={handleContinueOnboarding}
+              />
+            </RouteGuard>
           )}
         </main>
-
-        {/* Admin Login Modal */}
-        {showAdminLogin && (
-          <AdminLogin
-            onLogin={handleAdminLogin}
-            onCancel={() => setShowAdminLogin(false)}
-          />
-        )}
       </div>
     </ThemeProvider>
   );

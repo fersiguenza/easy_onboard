@@ -17,11 +17,13 @@ interface Topic {
 interface OnboardingFlowProps {
   topics: Topic[];
   onTopicComplete: (topicId: string) => void;
+  onComplete?: () => void;
 }
 
-export default function OnboardingFlow({ topics, onTopicComplete }: OnboardingFlowProps) {
+export default function OnboardingFlow({ topics, onTopicComplete, onComplete }: OnboardingFlowProps) {
   const { t } = useTranslation();
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (topics.length === 0) {
     return (
@@ -54,6 +56,9 @@ export default function OnboardingFlow({ topics, onTopicComplete }: OnboardingFl
     
     if (currentTopicIndex < topics.length - 1) {
       setCurrentTopicIndex(currentTopicIndex + 1);
+    } else {
+      // Last topic completed, trigger completion
+      onComplete?.();
     }
   };
 
@@ -64,9 +69,19 @@ export default function OnboardingFlow({ topics, onTopicComplete }: OnboardingFl
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-theme">
-      {/* Left Navigation Sidebar */}
-      <div className="w-80 bg-white/90 backdrop-blur-sm border-r border-gray-200 flex flex-col shadow-lg">
+    <div className="flex min-h-screen bg-gradient-theme relative">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-white/20 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Left Navigation Sidebar - Hidden on mobile, toggleable with overlay */}
+      <div className={`${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0 fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto w-80 bg-white/90 backdrop-blur-sm border-r border-gray-200 flex flex-col shadow-lg transition-transform duration-300 ease-in-out lg:flex`}>
         {/* Progress Header */}
         <div className="p-6 border-b border-gray-200 bg-white/50">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Your Progress</h2>
@@ -94,7 +109,10 @@ export default function OnboardingFlow({ topics, onTopicComplete }: OnboardingFl
               {topics.map((topic, index) => (
                 <button
                   key={topic.id}
-                  onClick={() => setCurrentTopicIndex(index)}
+                  onClick={() => {
+                    setCurrentTopicIndex(index);
+                    setIsSidebarOpen(false); // Close sidebar on mobile when topic is selected
+                  }}
                   className={`w-full text-left p-3 rounded-lg border transition-all ${
                     index === currentTopicIndex
                       ? 'border-primary bg-primary-50'
@@ -154,18 +172,47 @@ export default function OnboardingFlow({ topics, onTopicComplete }: OnboardingFl
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
+        {/* Mobile Progress Header - Visible only on mobile */}
+        <div className="lg:hidden bg-white border-b border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+                aria-label="Open topics menu"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('onboarding.step', { current: currentTopicIndex + 1, total: totalTopics })}
+              </h2>
+            </div>
+            <span className="text-sm font-medium text-primary">
+              {Math.round(progressPercentage)}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+        </div>
         {/* Current Topic */}
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-4 lg:p-8">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white rounded-lg shadow-lg border border-gray-200">
               {/* Topic Header */}
-              <div className="border-b border-gray-200 px-6 py-4">
+              <div className="border-b border-gray-200 px-4 lg:px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-2xl font-semibold text-gray-900">
+                    <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">
                       {currentTopic.title}
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">
+                    {/* Hide step info on mobile since it's in the mobile header */}
+                    <p className="text-sm text-gray-500 mt-1 hidden lg:block">
                       {t('onboarding.step', { current: currentTopicIndex + 1, total: totalTopics })}
                     </p>
                   </div>
@@ -182,8 +229,8 @@ export default function OnboardingFlow({ topics, onTopicComplete }: OnboardingFl
               </div>
 
               {/* Topic Content */}
-              <div className="px-6 py-8">
-                <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-gray-700 prose-a:text-primary prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-50 prose-pre:border">
+              <div className="px-4 lg:px-6 py-6 lg:py-8">
+                <div className="prose prose-sm lg:prose-lg max-w-none prose-headings:text-gray-900 prose-h1:text-2xl lg:prose-h1:text-3xl prose-h2:text-xl lg:prose-h2:text-2xl prose-h3:text-lg lg:prose-h3:text-xl prose-p:text-gray-700 prose-a:text-primary prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-50 prose-pre:border">
                   <ReactMarkdown 
                     remarkPlugins={[remarkGfm]}
                     components={{
@@ -246,20 +293,19 @@ export default function OnboardingFlow({ topics, onTopicComplete }: OnboardingFl
               </div>
 
               {/* Action Buttons */}
-              <div className="border-t border-gray-200 px-6 py-4">
-                <div className="flex items-center justify-between">
+              <div className="border-t border-gray-200 px-4 lg:px-6 py-4">
+                <div className="flex items-center justify-between flex-col space-y-3 lg:flex-row lg:space-y-0">
                   <button
                     onClick={goToPrevious}
                     disabled={currentTopicIndex === 0}
-                    className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full lg:w-auto px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-2 lg:order-1"
                   >
                     ← {t('onboarding.previous')}
                   </button>
                   
                   <button
                     onClick={goToNext}
-                    disabled={currentTopicIndex === topics.length - 1}
-                    className="px-6 py-2 text-white rounded-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                    className="w-full lg:w-auto px-6 py-2 text-white rounded-md hover:opacity-90 transition-opacity order-1 lg:order-2"
                     style={getButtonStyles('primary')}
                   >
                     {currentTopicIndex === topics.length - 1 ? t('onboarding.complete') : `${t('onboarding.next')} →`}

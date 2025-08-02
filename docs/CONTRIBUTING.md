@@ -216,4 +216,4 @@ Real-world examples or scenarios.
 - Business processes
 - Compliance requirements
 
-Remember: **Focus on actionable content that helps new developers become productive quickly!**
+Remember: **Focus on actionable content that helps new team members become productive quickly!**

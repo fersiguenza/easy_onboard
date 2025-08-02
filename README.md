@@ -54,9 +54,45 @@ npm run dev
 - 🎨 **Complete theming** - Brand colors, logos, and styling via environment variables
 - 📊 **Progress tracking** - Visual completion indicators
 - 🌍 **Multilingual support** - English and Spanish included
-- 🔒 **Admin interface** - Upload and manage content
+- 🔒 **Flexible authentication** - Support for Cognito, Azure AD, Google OAuth, or simple credentials
+- 🛡️ **Route protection** - Configurable page-level access control
+- 👥 **Admin interface** - Upload and manage content
 - 🐳 **Docker ready** - One-command deployment
 - 📱 **Responsive design** - Works on all devices
+
+## 🔐 **Authentication Options**
+
+Choose the authentication that fits your organization:
+
+### **🔓 No Authentication (Default)**
+```bash
+NEXT_PUBLIC_AUTH_PROVIDER=none
+```
+Perfect for internal wikis and open onboarding.
+
+### **☁️ Enterprise Authentication**
+```bash
+# AWS Cognito
+NEXT_PUBLIC_AUTH_PROVIDER=cognito
+NEXT_PUBLIC_COGNITO_USER_POOL_ID=us-east-1_xxxxxxxxx
+
+# Microsoft Azure AD
+NEXT_PUBLIC_AUTH_PROVIDER=azure
+NEXT_PUBLIC_AZURE_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+# Google OAuth
+NEXT_PUBLIC_AUTH_PROVIDER=google
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+```
+
+### **🔑 Simple Authentication**
+```bash
+NEXT_PUBLIC_AUTH_PROVIDER=simple
+NEXT_PUBLIC_ADMIN_USERNAME=admin
+NEXT_PUBLIC_ADMIN_PASSWORD=secure123
+```
+
+**[📖 Full Authentication Guide](docs/AUTHENTICATION.md)**
 
 ## 🎯 **Quick Start Examples**
 
@@ -117,6 +153,7 @@ data/topics/              # Fork projects
 ## 📚 **Documentation**
 
 - **[📖 Complete Documentation](docs/)** - All guides and references
+- **[🔐 Authentication Guide](docs/AUTHENTICATION.md)** - Cognito, Azure AD, Google OAuth, and simple auth
 - **[🎨 Theme Customization](docs/THEMES.md)** - Colors, branding, and styling
 - **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Docker, cloud, and traditional hosting
 - **[🤝 Contributing Guide](docs/CONTRIBUTING.md)** - Content creation best practices
