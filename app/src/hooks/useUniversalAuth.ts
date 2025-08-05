@@ -16,9 +16,9 @@ export interface AuthState {
 }
 
 export interface UniversalAuthReturn extends AuthState {
-  login: (credentials?: { username?: string; password?: string }) => Promise<void>;
+  login: (credentials?: { username?: string; password?: string }) => Promise<boolean>;
   logout: () => Promise<void>;
-  loginWithProvider: () => Promise<void>;
+  loginWithProvider: () => Promise<boolean>;
   checkAuth: () => Promise<void>;
 }
 
@@ -66,7 +66,7 @@ export function useUniversalAuth(): UniversalAuthReturn {
 
     if (user) {
       localStorage.setItem('easy-onboard-auth', JSON.stringify(user));
-      updateState({ isAuthenticated: true, user });
+      setState({ isAuthenticated: true, user, isLoading: false, error: null });
       return true;
     }
     return false;
@@ -94,7 +94,7 @@ export function useUniversalAuth(): UniversalAuthReturn {
         isAdmin: isAdmin
       };
       localStorage.setItem('easy-onboard-auth', JSON.stringify(user));
-      updateState({ isAuthenticated: true, user });
+      setState({ isAuthenticated: true, user, isLoading: false, error: null });
       return true;
     }
     return false;
@@ -121,7 +121,8 @@ export function useUniversalAuth(): UniversalAuthReturn {
       isAdmin: isAdmin
     };
     localStorage.setItem('easy-onboard-auth', JSON.stringify(user));
-    updateState({ isAuthenticated: true, user });
+    console.log('Azure login successful, updating state...', user);
+    setState({ isAuthenticated: true, user, isLoading: false, error: null });
     return true;
   };
 
@@ -147,12 +148,13 @@ export function useUniversalAuth(): UniversalAuthReturn {
       isAdmin: isAdmin
     };
     localStorage.setItem('easy-onboard-auth', JSON.stringify(user));
-    updateState({ isAuthenticated: true, user });
+    console.log('Google login successful, updating state...', user);
+    setState({ isAuthenticated: true, user, isLoading: false, error: null });
     return true;
   };
 
-  const login = async (credentials?: { username?: string; password?: string }): Promise<void> => {
-    updateState({ isLoading: true, error: null });
+  const login = async (credentials?: { username?: string; password?: string }): Promise<boolean> => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
       let success = false;
@@ -177,32 +179,39 @@ export function useUniversalAuth(): UniversalAuthReturn {
         case 'none':
           // No authentication required
           const guestUser: User = { id: 'guest', name: 'Guest User' };
-          updateState({ isAuthenticated: true, user: guestUser });
-          return;
+          setState({ isAuthenticated: true, user: guestUser, isLoading: false, error: null });
+          return true;
       }
 
       if (!success) {
-        throw new Error('Invalid credentials');
-      }
+        setState(prev => ({ ...prev, error: 'Invalid credentials', isLoading: false }));
+        return false;
+      } 
+      
+      return true;
     } catch (error) {
-      updateState({ error: error instanceof Error ? error.message : 'Authentication failed' });
-    } finally {
-      updateState({ isLoading: false });
+      setState(prev => ({ 
+        ...prev, 
+        error: error instanceof Error ? error.message : 'Authentication failed',
+        isLoading: false
+      }));
+      return false;
     }
   };
 
-  const loginWithProvider = async (): Promise<void> => {
+  const loginWithProvider = async (): Promise<boolean> => {
     if (authConfig.provider === 'azure' || authConfig.provider === 'google') {
-      await login();
+      return await login();
     }
+    return false;
   };
 
   const logout = async (): Promise<void> => {
     // Clear localStorage first
     localStorage.removeItem('easy-onboard-auth');
     
-    // Clear state immediately
-    updateState({ 
+    // Clear state immediately and force update
+    setState({ 
       isAuthenticated: false, 
       user: null, 
       error: null,
@@ -213,15 +222,12 @@ export function useUniversalAuth(): UniversalAuthReturn {
     switch (authConfig.provider) {
       case 'azure':
         // In real implementation, call MSAL logout
-        console.log('Azure AD logout');
         break;
       case 'google':
         // In real implementation, call Google logout
-        console.log('Google logout');
         break;
       case 'cognito':
         // In real implementation, call Cognito logout
-        console.log('Cognito logout');
         break;
     }
   };

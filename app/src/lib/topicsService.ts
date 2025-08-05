@@ -50,6 +50,48 @@ class TopicsService {
     }
   }
 
+  async createTopicDirectory(title: string, content?: string): Promise<boolean> {
+    try {
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, content, isDirectory: true }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create topic directory');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error creating topic directory:', error);
+      return false;
+    }
+  }
+
+  async addTopicSection(topicId: string, sectionTitle: string, content: string): Promise<boolean> {
+    try {
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title: topicId, sectionTitle, content }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add topic section');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error adding topic section:', error);
+      return false;
+    }
+  }
+
   async deleteTopic(id: string): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}?id=${id}`, {

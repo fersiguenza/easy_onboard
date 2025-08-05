@@ -1,6 +1,6 @@
 'use client';
 
-import MarkdownUpload from '@/components/MarkdownUpload';
+import EnhancedUpload from '@/components/EnhancedUpload';
 import TopicList from '@/components/TopicList';
 import ProgressTracker from '@/components/ProgressTracker';
 import { useState } from 'react';
@@ -11,6 +11,11 @@ interface Topic {
   content: string;
   uploadedAt: string;
   completed: boolean;
+  isDirectory?: boolean;
+  sections?: {
+    title: string;
+    content: string;
+  }[];
 }
 
 interface AdminPanelProps {
@@ -27,6 +32,18 @@ export default function AdminPanel({
   onTopicComplete 
 }: AdminPanelProps) {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+
+  const handleCreateDirectory = async (title: string, content?: string) => {
+    // This will be handled by the topicsService
+    console.log('Creating directory:', title, content);
+    window.location.reload();
+  };
+
+  const handleAddSection = async (topicId: string, sectionTitle: string, content: string) => {
+    // This will be handled by the topicsService
+    console.log('Adding section:', topicId, sectionTitle, content);
+    window.location.reload();
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -45,7 +62,12 @@ export default function AdminPanel({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Upload Section */}
         <div className="lg:col-span-1">
-          <MarkdownUpload onUpload={onTopicUpload} />
+          <EnhancedUpload 
+            topics={topics}
+            onUpload={onTopicUpload}
+            onCreateDirectory={handleCreateDirectory}
+            onAddSection={handleAddSection}
+          />
         </div>
 
         {/* Topics List */}

@@ -27,8 +27,11 @@ export default function UniversalLogin({ onLogin, onCancel, title }: UniversalLo
     e.preventDefault();
     
     try {
-      await login({ username, password });
-      onLogin();
+      const success = await login({ username, password });
+      if (success) {
+        // Force a window reload to ensure all state is properly updated
+        window.location.reload();
+      }
     } catch (err) {
       // Error is handled by the hook
     }
@@ -36,8 +39,11 @@ export default function UniversalLogin({ onLogin, onCancel, title }: UniversalLo
 
   const handleProviderLogin = async (provider: 'azure' | 'google') => {
     try {
-      await loginWithProvider();
-      onLogin();
+      const success = await loginWithProvider();
+      if (success) {
+        // Force a window reload to ensure all state is properly updated
+        window.location.reload();
+      }
     } catch (err) {
       // Error is handled by the hook
     }

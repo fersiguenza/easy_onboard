@@ -22,12 +22,10 @@ export function useNavigation() {
 
   const enableAdminMode = () => {
     setIsAdminMode(true);
-    setCurrentView('home');
   };
 
   const disableAdminMode = () => {
     setIsAdminMode(false);
-    setCurrentView('home');
   };
 
   return {

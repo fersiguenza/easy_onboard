@@ -12,6 +12,14 @@ interface Topic {
   content: string;
   uploadedAt: string;
   completed: boolean;
+  isDirectory?: boolean;
+  sections?: {
+    id: string;
+    title: string;
+    content: string;
+    filename: string;
+    order: number;
+  }[];
 }
 
 interface OnboardingFlowProps {
@@ -23,7 +31,15 @@ interface OnboardingFlowProps {
 export default function OnboardingFlow({ topics, onTopicComplete, onComplete }: OnboardingFlowProps) {
   const { t } = useTranslation();
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Reset section index when topic changes
+  const handleTopicChange = (index: number) => {
+    setCurrentTopicIndex(index);
+    setCurrentSectionIndex(0);
+    setIsSidebarOpen(false);
+  };
 
   if (topics.length === 0) {
     return (
@@ -78,13 +94,24 @@ export default function OnboardingFlow({ topics, onTopicComplete, onComplete }: 
         />
       )}
       
-      {/* Left Navigation Sidebar - Hidden on mobile, toggleable with overlay */}
+      {/* Left Navigation Sidebar - Mobile responsive with overlay */}
       <div className={`${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0 fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto w-80 bg-white/90 backdrop-blur-sm border-r border-gray-200 flex flex-col shadow-lg transition-transform duration-300 ease-in-out lg:flex`}>
+      } lg:translate-x-0 fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto w-80 lg:w-80 bg-white border-r border-gray-200 flex flex-col shadow-xl lg:shadow-none transition-transform duration-300 ease-in-out`}>
         {/* Progress Header */}
-        <div className="p-6 border-b border-gray-200 bg-white/50">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Your Progress</h2>
+        <div className="p-4 lg:p-6 border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-base lg:text-lg font-semibold text-gray-900">Your Progress</h2>
+            {/* Close button for mobile */}
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden p-1 rounded-md text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-gray-600">
               {completedTopics} of {totalTopics} completed
@@ -107,48 +134,75 @@ export default function OnboardingFlow({ topics, onTopicComplete, onComplete }: 
             <h3 className="text-sm font-medium text-gray-700 mb-3">Onboarding Topics</h3>
             <div className="space-y-2">
               {topics.map((topic, index) => (
-                <button
-                  key={topic.id}
-                  onClick={() => {
-                    setCurrentTopicIndex(index);
-                    setIsSidebarOpen(false); // Close sidebar on mobile when topic is selected
-                  }}
-                  className={`w-full text-left p-3 rounded-lg border transition-all ${
-                    index === currentTopicIndex
-                      ? 'border-primary bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center mb-1">
-                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium mr-2 ${
+                <div key={topic.id}>
+                  <button
+                    onClick={() => handleTopicChange(index)}
+                    className={`w-full text-left p-3 rounded-lg border transition-all ${
+                      index === currentTopicIndex
+                        ? 'border-primary bg-primary-50'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center mb-1">
+                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium mr-2 ${
+                            topic.completed 
+                              ? 'bg-green-500 text-white' 
+                              : index === currentTopicIndex
+                              ? 'bg-primary text-white'
+                              : 'bg-gray-300 text-gray-600'
+                          }`}>
+                            {topic.completed ? '✓' : index + 1}
+                          </span>
+                          <span className={`text-sm font-medium truncate ${
+                            index === currentTopicIndex ? 'text-primary-dark' : 'text-gray-900'
+                          }`}>
+                            {topic.title}
+                          </span>
+                          {topic.isDirectory && (
+                            <svg className="ml-2 w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div className={`text-xs ml-8 ${
                           topic.completed 
-                            ? 'bg-green-500 text-white' 
+                            ? 'text-green-600' 
                             : index === currentTopicIndex
-                            ? 'bg-primary text-white'
-                            : 'bg-gray-300 text-gray-600'
+                            ? 'text-primary'
+                            : 'text-gray-500'
                         }`}>
-                          {topic.completed ? '✓' : index + 1}
-                        </span>
-                        <span className={`text-sm font-medium truncate ${
-                          index === currentTopicIndex ? 'text-primary-dark' : 'text-gray-900'
-                        }`}>
-                          {topic.title}
-                        </span>
-                      </div>
-                      <div className={`text-xs ml-8 ${
-                        topic.completed 
-                          ? 'text-green-600' 
-                          : index === currentTopicIndex
-                          ? 'text-primary'
-                          : 'text-gray-500'
-                      }`}>
-                        {topic.completed ? 'Completed' : index === currentTopicIndex ? 'Current' : 'Pending'}
+                          {topic.completed ? 'Completed' : index === currentTopicIndex ? 'Current' : 'Pending'}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  
+                  {/* Sections for directory topics */}
+                  {topic.isDirectory && topic.sections && index === currentTopicIndex && (
+                    <div className="ml-4 mt-2 space-y-1">
+                      {topic.sections.map((section, sectionIndex) => (
+                        <button
+                          key={section.id}
+                          onClick={() => setCurrentSectionIndex(sectionIndex)}
+                          className={`w-full text-left p-2 rounded-md text-sm transition-all ${
+                            sectionIndex === currentSectionIndex
+                              ? 'bg-primary-100 text-primary-dark border-l-2 border-primary'
+                              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <svg className="mr-2 w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"/>
+                            </svg>
+                            <span className="truncate">{section.title}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -178,18 +232,24 @@ export default function OnboardingFlow({ topics, onTopicComplete, onComplete }: 
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+                className="flex items-center p-3 rounded-lg bg-primary text-white hover:bg-primary-dark transition-colors shadow-md"
                 aria-label="Open topics menu"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
+                <span className="text-sm font-medium">Topics</span>
               </button>
-              <h2 className="text-lg font-semibold text-gray-900">
-                {t('onboarding.step', { current: currentTopicIndex + 1, total: totalTopics })}
-              </h2>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {currentTopic.title}
+                </h2>
+                <p className="text-xs text-gray-500">
+                  Step {currentTopicIndex + 1} of {totalTopics}
+                </p>
+              </div>
             </div>
-            <span className="text-sm font-medium text-primary">
+            <span className="text-sm font-bold text-primary">
               {Math.round(progressPercentage)}%
             </span>
           </div>
@@ -210,10 +270,20 @@ export default function OnboardingFlow({ topics, onTopicComplete, onComplete }: 
                   <div>
                     <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">
                       {currentTopic.title}
+                      {currentTopic.isDirectory && currentTopic.sections && (
+                        <span className="text-lg text-primary ml-2">
+                          → {currentTopic.sections[currentSectionIndex]?.title}
+                        </span>
+                      )}
                     </h1>
                     {/* Hide step info on mobile since it's in the mobile header */}
                     <p className="text-sm text-gray-500 mt-1 hidden lg:block">
                       {t('onboarding.step', { current: currentTopicIndex + 1, total: totalTopics })}
+                      {currentTopic.isDirectory && currentTopic.sections && (
+                        <span className="ml-2">
+                          (Section {currentSectionIndex + 1} of {currentTopic.sections.length})
+                        </span>
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -287,7 +357,10 @@ export default function OnboardingFlow({ topics, onTopicComplete, onComplete }: 
                       ),
                     }}
                   >
-                    {currentTopic.content}
+                    {currentTopic.isDirectory && currentTopic.sections 
+                      ? currentTopic.sections[currentSectionIndex]?.content || currentTopic.content
+                      : currentTopic.content
+                    }
                   </ReactMarkdown>
                 </div>
               </div>

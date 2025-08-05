@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import HomePage from '@/components/HomePage';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import AdminPanel from '@/components/AdminPanel';
@@ -16,41 +16,38 @@ import '@/lib/i18n';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<'home' | 'onboarding' | 'congratulations'>('home');
+  const previousUserRef = useRef<any>(null);
   
   // Custom hooks
-  const { topics, loading, createTopic, deleteTopic, updateTopicCompletion } = useTopics();
+  const { topics, loading, createTopic, deleteTopic, updateTopicCompletion, loadTopics, clearTopics } = useTopics();
   const { t } = useLanguage();
   const { isAdminMode, enableAdminMode, disableAdminMode } = useNavigation();
   const { user, logout } = useUniversalAuth();
   const authConfig = getAuthConfig();
 
-  // Auto-redirect admin users to admin panel
+    // Simple, direct authentication handling
   useEffect(() => {
-    if (user?.isAdmin && !isAdminMode && authConfig.provider !== 'none') {
-      enableAdminMode();
-    }
-  }, [user, isAdminMode, enableAdminMode, authConfig.provider]);
-
-  // Reset admin mode when user logs out
-  useEffect(() => {
-    if (!user && isAdminMode) {
-      disableAdminMode();
-      setCurrentView('home');
-    }
-  }, [user, isAdminMode, disableAdminMode]);
-
-  // Reset view state when user is not authenticated (after logout)
-  useEffect(() => {
-    if (!user && authConfig.requireAuth && authConfig.provider !== 'none') {
-      setCurrentView('home');
+    const previousUser = previousUserRef.current;
+    
+    if (user) {
+      // Load topics immediately (only once per user)
+      if (topics.length === 0) {
+        loadTopics();
+      }
+      
+      // Handle admin vs regular user
+      if (user.isAdmin) {
+        enableAdminMode();
+      }
+    } else if (previousUser && !user) {
+      // Only clear when transitioning from logged in to logged out
+      clearTopics();
       disableAdminMode();
     }
-  }, [user, authConfig.requireAuth, authConfig.provider, disableAdminMode]);
-
-  const handleExitAdmin = () => {
-    disableAdminMode();
-    setCurrentView('home');
-  };
+    
+    // Update the ref
+    previousUserRef.current = user;
+  }, [user, topics.length, loadTopics, enableAdminMode]);
 
   const handleAdminToggle = () => {
     if (!isAdminMode && user?.isAdmin) {
@@ -61,12 +58,18 @@ export default function Home() {
   };
 
   const handleLogout = async () => {
-    // First disable admin mode
+    // Clear admin mode first
     disableAdminMode();
     setCurrentView('home');
     
-    // Then logout
+    // Clear topics and local storage
+    clearTopics();
+    
+    // Then logout from auth provider
     await logout();
+    
+    // Force refresh the page to ensure everything is cleared
+    window.location.reload();
   };
 
   const handleTopicUpload = (title: string, content: string) => {
@@ -110,6 +113,11 @@ export default function Home() {
 
   const handleContinueOnboarding = () => {
     setCurrentView('onboarding');
+  };
+
+  const handleExitAdmin = () => {
+    disableAdminMode();
+    setCurrentView('home');
   };
 
   const handleBackToHome = () => {

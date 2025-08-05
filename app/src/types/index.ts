@@ -1,10 +1,21 @@
 // Core domain types
-export interface Topic {
+export interface TopicSection {
   id: string;
   title: string;
   content: string;
+  filename: string;
+  order: number;
+}
+
+export interface Topic {
+  id: string;
+  title: string;
+  content: string; // Combined content from all sections or single file content
   uploadedAt: string;
   completed: boolean;
+  isDirectory?: boolean; // Whether this topic is a directory with sections
+  sections?: TopicSection[]; // If directory, contains multiple sections
+  filename?: string; // If single file, the filename
 }
 
 // Component prop types
@@ -48,6 +59,7 @@ export interface UseTopicsReturn {
   loading: boolean;
   error: string | null;
   loadTopics: () => Promise<void>;
+  clearTopics: () => void;
   createTopic: (title: string, content: string) => Promise<void>;
   deleteTopic: (id: string) => Promise<void>;
   updateTopicCompletion: (id: string, completed: boolean) => Promise<void>;
